@@ -15,7 +15,7 @@
 		4ACDB8ED1BC76A14001483A1 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4ACDB8EB1BC76A14001483A1 /* LaunchScreen.storyboard */; };
 		4ACDB8F81BC76A14001483A1 /* cameraTestExpandTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ACDB8F71BC76A14001483A1 /* cameraTestExpandTests.m */; };
 		4ACDB9031BC76A14001483A1 /* cameraTestExpandUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ACDB9021BC76A14001483A1 /* cameraTestExpandUITests.m */; };
-		4AF4F2211BC8AD5B004DB8DE /* cameraEngine.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AF4F2201BC8AD5B004DB8DE /* cameraEngine.m */; settings = {ASSET_TAGS = (); }; };
+		4AF4F2211BC8AD5B004DB8DE /* CameraEngine.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AF4F2201BC8AD5B004DB8DE /* CameraEngine.m */; settings = {ASSET_TAGS = (); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -52,8 +52,8 @@
 		4ACDB8FE1BC76A14001483A1 /* cameraTestExpandUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = cameraTestExpandUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4ACDB9021BC76A14001483A1 /* cameraTestExpandUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = cameraTestExpandUITests.m; sourceTree = "<group>"; };
 		4ACDB9041BC76A14001483A1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		4AF4F21F1BC8AD5B004DB8DE /* cameraEngine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cameraEngine.h; sourceTree = "<group>"; };
-		4AF4F2201BC8AD5B004DB8DE /* cameraEngine.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = cameraEngine.m; sourceTree = "<group>"; };
+		4AF4F21F1BC8AD5B004DB8DE /* CameraEngine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CameraEngine.h; sourceTree = "<group>"; };
+		4AF4F2201BC8AD5B004DB8DE /* CameraEngine.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CameraEngine.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -109,8 +109,8 @@
 				4ACDB8E31BC76A14001483A1 /* ViewController.h */,
 				4ACDB8E41BC76A14001483A1 /* ViewController.m */,
 				4ACDB8E61BC76A14001483A1 /* Main.storyboard */,
-				4AF4F21F1BC8AD5B004DB8DE /* cameraEngine.h */,
-				4AF4F2201BC8AD5B004DB8DE /* cameraEngine.m */,
+				4AF4F21F1BC8AD5B004DB8DE /* CameraEngine.h */,
+				4AF4F2201BC8AD5B004DB8DE /* CameraEngine.m */,
 				4ACDB8E91BC76A14001483A1 /* Assets.xcassets */,
 				4ACDB8EB1BC76A14001483A1 /* LaunchScreen.storyboard */,
 				4ACDB8EE1BC76A14001483A1 /* Info.plist */,
@@ -275,7 +275,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4AF4F2211BC8AD5B004DB8DE /* cameraEngine.m in Sources */,
+				4AF4F2211BC8AD5B004DB8DE /* CameraEngine.m in Sources */,
 				4ACDB8E51BC76A14001483A1 /* ViewController.m in Sources */,
 				4ACDB8E21BC76A14001483A1 /* AppDelegate.m in Sources */,
 				4ACDB8DF1BC76A14001483A1 /* main.m in Sources */,

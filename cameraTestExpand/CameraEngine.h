@@ -1,5 +1,5 @@
 //
-//  cameraEngine.h
+//  CameraEngine.h
 //  cameraTestExpand
 //
 //  Created by jzy on 15/10/10.
@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface cameraEngine : NSObject
+@interface CameraEngine : NSObject
 
 - (instancetype)initRecordInView:(UIView *)showView andFocusView:(UIView *)focusView;
 

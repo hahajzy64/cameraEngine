@@ -1,5 +1,5 @@
 //
-//  cameraEngine.m
+//  CameraEngine.m
 //  cameraTestExpand
 //
 //  Created by jzy on 15/10/10.
@@ -11,7 +11,7 @@
 
 typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
 
-@interface cameraEngine () <AVCaptureFileOutputRecordingDelegate>
+@interface CameraEngine () <AVCaptureFileOutputRecordingDelegate>
 
 @property (strong,nonatomic) AVCaptureSession *captureSession;//负责输入和输出设置之间的数据传递
 @property (strong,nonatomic) AVCaptureDevice *captureDeviceVideo;//录像设备（镜头）
@@ -22,24 +22,26 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
 @property (strong,nonatomic) AVCaptureMovieFileOutput *captureMovieFileOutput;//视频输出流
 @property (assign,nonatomic) UIBackgroundTaskIdentifier backgroundTaskIdentifier;//后台任务标识
 
-@property (strong,nonatomic) UIView *viewContainer;//预览层
-@property (strong,nonatomic) UIView *focusCursor;//聚焦图片
+@property (weak,nonatomic) UIView *viewContainer;//预览层
+@property (weak,nonatomic) UIView *focusCursor;//聚焦图片
 
 @end
 
-@implementation cameraEngine
+@implementation CameraEngine
 
 #pragma mark init
 - (instancetype)initRecordInView:(UIView *)showView andFocusView:(UIView *)focusView{
     if (self = [super init]) {
         self.viewContainer = showView;
         self.focusCursor = focusView;
+        
         CALayer *rootLayer = showView.layer;
         [rootLayer setMasksToBounds:YES];
         [self.captureVideoPreviewLayer setFrame:CGRectMake(0, 0, showView.frame.size.width, showView.frame.size.height + showView.frame.origin.y)];//这里高度加上了self.viewContainer.frame.origin.y才对
         [rootLayer insertSublayer:self.captureVideoPreviewLayer atIndex:0];
         
         [self.captureSession startRunning];
+        [self addGenstureRecognizerInView];
     }
     return self;
 }
@@ -48,11 +50,11 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
 - (AVCaptureSession *)captureSession{
     if (!_captureSession) {
         _captureSession = [[AVCaptureSession alloc]init];
-        if ([_captureSession canSetSessionPreset:AVCaptureSessionPreset3840x2160]) {//设置分辨率
-            _captureSession.sessionPreset = AVCaptureSessionPreset3840x2160;
-        }else{
-            [_captureSession setSessionPreset:AVCaptureSessionPresetHigh];
-        }
+//        if ([_captureSession canSetSessionPreset:AVCaptureSessionPreset3840x2160]) {//设置分辨率
+//            _captureSession.sessionPreset = AVCaptureSessionPreset3840x2160;
+//        }else{
+            [_captureSession setSessionPreset:AVCaptureSessionPresetMedium];
+//        }
         
         if ([_captureSession canAddInput:self.captureDeviceInputVideo]){
             [_captureSession addInput:self.captureDeviceInputVideo];
@@ -61,24 +63,32 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
             [_captureSession addInput:self.captureDeviceInputAudio];
         }
         if ([_captureSession canAddOutput:self.captureMovieFileOutput]) {
-            [_captureSession canAddOutput:self.captureMovieFileOutput];
+            [_captureSession addOutput:self.captureMovieFileOutput];
         }
-        
+        AVCaptureConnection *captureConnection=[self.captureMovieFileOutput     connectionWithMediaType:AVMediaTypeVideo];              //这个是什么。。之前没加切换不了前后摄像头。然而注释了也行了
+        if ([captureConnection isVideoStabilizationSupported ]) {
+            captureConnection.preferredVideoStabilizationMode=AVCaptureVideoStabilizationModeAuto;
+        }
     }
-    
     return _captureSession;
 }
 
 - (AVCaptureDevice *)captureDeviceVideo{// 视频输入设备
     if (!_captureDeviceVideo) {
-        _captureDeviceVideo = [self getCameraDeviceWithPosition:AVCaptureDevicePositionBack];
+        _captureDeviceVideo = [self getCameraDeviceWithPosition:AVCaptureDevicePositionBack];//取得后置摄像头
+        if (!_captureDeviceVideo) {
+            NSLog(@"取得后置摄像头时出现问题.");
+        }
     }
     return _captureDeviceVideo;
 }
 
-- (AVCaptureDevice *)captureDeviceVoice{// 音频输入设备
+- (AVCaptureDevice *)captureDeviceAudio{// 音频输入设备
     if (!_captureDeviceAudio) {
-        _captureDeviceAudio = [[AVCaptureDevice devicesWithMediaType:AVMediaTypeAudio]firstObject];
+        _captureDeviceAudio = [[AVCaptureDevice devicesWithMediaType:AVMediaTypeAudio] firstObject];
+        if (!_captureDeviceAudio) {
+            NSLog(@"取得麦克风时出现问题.");
+        }
     }
     return _captureDeviceAudio;
 }
@@ -87,7 +97,9 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
     if (!_captureDeviceInputVideo) {
         NSError *error;
         _captureDeviceInputVideo = [[AVCaptureDeviceInput alloc]initWithDevice:self.captureDeviceVideo error:&error];
-        [self printErrorReason:error];
+        if(error){
+            NSLog(@"设置视频输入设备数据发生错误，错误信息：%@",error.localizedDescription);
+        }
     }
     return _captureDeviceInputVideo;
 }
@@ -95,8 +107,10 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
 - (AVCaptureDeviceInput *)captureDeviceInputAudio{// 音频输入设备数据
     if (!_captureDeviceInputAudio) {
         NSError *error;
-        _captureDeviceInputAudio = [[AVCaptureDeviceInput alloc]initWithDevice:self.captureDeviceVoice error:&error];
-        [self printErrorReason:error];
+        _captureDeviceInputAudio = [[AVCaptureDeviceInput alloc]initWithDevice:self.captureDeviceAudio error:&error];
+        if(error){
+            NSLog(@"设置音频输入设备数据发生错误，错误信息：%@",error.localizedDescription);
+        }
     }
     return _captureDeviceInputAudio;
 }
@@ -111,7 +125,7 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
 - (AVCaptureVideoPreviewLayer *)captureVideoPreviewLayer{// 视频预览
     if (!_captureVideoPreviewLayer) {
         _captureVideoPreviewLayer = [[AVCaptureVideoPreviewLayer alloc]initWithSession:self.captureSession];
-        [_captureVideoPreviewLayer setVideoGravity:AVLayerVideoGravityResizeAspect];
+        [_captureVideoPreviewLayer setVideoGravity:AVLayerVideoGravityResizeAspectFill];
     }
     return _captureVideoPreviewLayer;
 }
@@ -169,7 +183,7 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
  *  闪光灯，调用打开，再调用关闭
  */
 - (void)flash{
-    if ([self getCurrentDevicePosition] == AVCaptureDevicePositionFront) {//前置摄像头就不开
+    if ([self getCurrentDevicePosition] == AVCaptureDevicePositionFront) {//是前置摄像头就不开
         
     }else{
         if(self.captureDeviceVideo.torchMode == AVCaptureTorchModeOff){//打开  (用hasTorch不行,不管开没开闪光灯都是返回ture)
@@ -190,14 +204,14 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
 - (void)changeTargetCamera{
     AVCaptureDevice *currentDevice = [self.captureDeviceInputVideo device];
     AVCaptureDevicePosition currentPosition = [currentDevice position];
-//    [self removeNotificationFromCaptureDevice:currentDevice];
+    [self removeNotificationFromCaptureDevice:currentDevice];
     AVCaptureDevice *toChangeDevice;
     AVCaptureDevicePosition toChangePosition = AVCaptureDevicePositionFront;
-    if (currentPosition == AVCaptureDevicePositionUnspecified||currentPosition==AVCaptureDevicePositionFront) {
+    if (currentPosition == AVCaptureDevicePositionUnspecified||currentPosition == AVCaptureDevicePositionFront) {
         toChangePosition = AVCaptureDevicePositionBack;
     }
     toChangeDevice = [self getCameraDeviceWithPosition:toChangePosition];
-//    [self addNotificationToCaptureDevice:toChangeDevice];
+    [self addNotificationToCaptureDevice:toChangeDevice];
     //获得要调整的设备输入对象
     AVCaptureDeviceInput *toChangeDeviceInput = [[AVCaptureDeviceInput alloc]initWithDevice:toChangeDevice error:nil];
     
@@ -239,9 +253,9 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
 /**
  *  添加点按手势，点按时聚焦
  */
-- (void)addGenstureRecognizerInView:(UIView *)view{
+- (void)addGenstureRecognizerInView{
     UITapGestureRecognizer *tapGesture=[[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(tapScreen:)];
-    [view addGestureRecognizer:tapGesture];
+    [self.viewContainer addGestureRecognizer:tapGesture];
 }
 
 - (void)tapScreen:(UITapGestureRecognizer *)tapGesture{
@@ -276,9 +290,52 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
  *  @param error 错误
  *
  */
+/**
+ *  给输入设备添加通知
+ */
+-(void)addNotificationToCaptureDevice:(AVCaptureDevice *)captureDevice{
+    //注意添加区域改变捕获通知必须首先设置设备允许捕获
+    [self changeDeviceProperty:^(AVCaptureDevice *captureDevice) {
+        captureDevice.subjectAreaChangeMonitoringEnabled=YES;
+    }];
+    NSNotificationCenter *notificationCenter= [NSNotificationCenter defaultCenter];
+    //捕获区域发生改变
+    [notificationCenter addObserver:self selector:@selector(areaChange:) name:AVCaptureDeviceSubjectAreaDidChangeNotification object:captureDevice];
+}
+-(void)removeNotificationFromCaptureDevice:(AVCaptureDevice *)captureDevice{
+    NSNotificationCenter *notificationCenter= [NSNotificationCenter defaultCenter];
+    [notificationCenter removeObserver:self name:AVCaptureDeviceSubjectAreaDidChangeNotification object:captureDevice];
+}
+/**
+ *  移除所有通知
+ */
+-(void)removeNotification{
+    NSNotificationCenter *notificationCenter= [NSNotificationCenter defaultCenter];
+    [notificationCenter removeObserver:self];
+}
 
-- (void)printErrorReason:(NSError *)error{
-    NSLog(@"出错，错误原因：%@",error.localizedDescription);
+-(void)addNotificationToCaptureSession:(AVCaptureSession *)captureSession{
+    NSNotificationCenter *notificationCenter= [NSNotificationCenter defaultCenter];
+    //会话出错
+    [notificationCenter addObserver:self selector:@selector(sessionRuntimeError:) name:AVCaptureSessionRuntimeErrorNotification object:captureSession];
+}
+
+/**
+ *  捕获区域改变
+ *
+ *  @param notification 通知对象
+ */
+-(void)areaChange:(NSNotification *)notification{
+    NSLog(@"捕获区域改变...");
+}
+
+/**
+ *  会话出错
+ *
+ *  @param notification 通知对象
+ */
+-(void)sessionRuntimeError:(NSNotification *)notification{
+    NSLog(@"会话发生错误.");
 }
 
 #pragma mark 视频录制
