@@ -279,7 +279,8 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
     [self changeDeviceProperty:^(AVCaptureDevice *captureDevice) {
         CGFloat initialPinchZoom = captureDevice.videoZoomFactor;
         CGFloat zoomFactor;
-        zoomFactor = initialPinchZoom * recogniser.scale ;
+        float scale = recogniser.scale - 1.0;
+        zoomFactor = initialPinchZoom + scale;       
     
         zoomFactor = MIN(11.0f, zoomFactor);
         zoomFactor = MAX(1.0f, zoomFactor);
@@ -300,7 +301,6 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
     scalePercent = scalePercent * 10 + 1;
     if (![self.captureDeviceInputVideo device])
         return;
-    
     [self changeDeviceProperty:^(AVCaptureDevice *captureDevice) {
         CGFloat zoomFactor;
         zoomFactor = scalePercent ;

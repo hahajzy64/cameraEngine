@@ -52,7 +52,7 @@
 - (IBAction)focusChange:(id)sender {
     UISlider *slider = (UISlider *)sender;
 //    AVCaptureDevice *currentDevice = [self.captureDeviceInput device];
-    [self.engine setVideoZoomFactor:slider.value*10+1];
+    [self.engine setVideoZoomFactor:slider.value];
 }
 
 - (void)didReceiveMemoryWarning {
