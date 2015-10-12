@@ -14,6 +14,10 @@
  */
 @property (nonatomic, copy) dispatch_block_t upBlock;
 
+/*
+ *手指捏合缩放镜头回调
+ */
+@property (nonatomic, copy) void (^focusChange)(float changeValue);
 
 /**
  *  showView:镜头预览, focusView:焦点
@@ -53,5 +57,12 @@
  *  移除音量键控制功能
  */
 - (void)removeVolumeButtonEvents;
+
+/**
+ *  Slider拉伸缩放
+ *
+ *  @param scalePercent 缩放度 (0.0 - 1.0)
+ */
+- (void)setVideoZoomFactor:(float)scalePercent;
 
 @end

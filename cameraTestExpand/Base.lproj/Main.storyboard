@@ -100,7 +100,7 @@
                                             <constraint firstAttribute="width" constant="90" id="cwj-RI-9Z2"/>
                                         </constraints>
                                     </view>
-                                    <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="Qnx-7e-ttM">
+                                    <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="Qnx-7e-ttM">
                                         <rect key="frame" x="132" y="365" width="337" height="31"/>
                                         <animations/>
                                         <constraints>
@@ -140,6 +140,7 @@
                     </view>
                     <connections>
                         <outlet property="focusCursor" destination="cy9-yK-tfb" id="s3w-33-3xB"/>
+                        <outlet property="slider" destination="Qnx-7e-ttM" id="dYA-eu-F44"/>
                         <outlet property="viewContainer" destination="dP5-0U-cRT" id="NiV-lX-yUh"/>
                     </connections>
                 </viewController>

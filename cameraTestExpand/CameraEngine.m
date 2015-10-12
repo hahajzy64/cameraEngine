@@ -58,7 +58,7 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
 //        if ([_captureSession canSetSessionPreset:AVCaptureSessionPreset3840x2160]) {//设置分辨率
 //            _captureSession.sessionPreset = AVCaptureSessionPreset3840x2160;
 //        }else{
-            [_captureSession setSessionPreset:AVCaptureSessionPresetMedium];
+            [_captureSession setSessionPreset:AVCaptureSessionPresetHigh];
 //        }
         
         if ([_captureSession canAddInput:self.captureDeviceInputVideo]){
@@ -255,11 +255,13 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
 }
 
 /**
- *  添加点按手势，点按时聚焦
+ *  添加点按手势，点按时聚焦。拉伸缩放
  */
 - (void)addGenstureRecognizerInView{
     UITapGestureRecognizer *tapGesture=[[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(tapScreen:)];
     [self.viewContainer addGestureRecognizer:tapGesture];
+    UIPinchGestureRecognizer *pinchGesture = [[UIPinchGestureRecognizer alloc] initWithTarget:self action:@selector(pinchDetected:)];
+    [self.viewContainer addGestureRecognizer:pinchGesture];
 }
 
 - (void)tapScreen:(UITapGestureRecognizer *)tapGesture{
@@ -268,6 +270,45 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
     CGPoint cameraPoint= [self.captureVideoPreviewLayer captureDevicePointOfInterestForPoint:point];
     [self setFocusCursorWithPoint:point];
     [self focusWithMode:AVCaptureFocusModeAutoFocus exposureMode:AVCaptureExposureModeAutoExpose atPoint:cameraPoint];
+}
+
+/**
+ *  捏合拉伸缩放
+ */
+- (void)pinchDetected:(UIPinchGestureRecognizer *)recogniser{
+    [self changeDeviceProperty:^(AVCaptureDevice *captureDevice) {
+        CGFloat initialPinchZoom = captureDevice.videoZoomFactor;
+        CGFloat zoomFactor;
+        zoomFactor = initialPinchZoom * recogniser.scale ;
+    
+        zoomFactor = MIN(11.0f, zoomFactor);
+        zoomFactor = MAX(1.0f, zoomFactor);
+        
+        captureDevice.videoZoomFactor = zoomFactor;
+        if (self.focusChange != nil) {
+            self.focusChange((zoomFactor - 1)/10);
+        }
+    }];
+}
+
+/**
+ *  Slider拉伸缩放
+ *
+ *  @param scalePercent 缩放度
+ */
+- (void)setVideoZoomFactor:(float)scalePercent{
+    scalePercent = scalePercent * 10 + 1;
+    if (![self.captureDeviceInputVideo device])
+        return;
+    
+    [self changeDeviceProperty:^(AVCaptureDevice *captureDevice) {
+        CGFloat zoomFactor;
+        zoomFactor = scalePercent ;
+        zoomFactor = MIN(11.0f, zoomFactor);
+        zoomFactor = MAX(1.0f, zoomFactor);
+        
+        captureDevice.videoZoomFactor = zoomFactor;
+    }];
 }
 
 /**
@@ -287,7 +328,7 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
     }];
 }
 
-#pragma mark 通知
+#pragma mark 录像通知
 /**
  *  打印错误信息
  *
@@ -429,12 +470,13 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
     self.saveVoice = voice;
 }
 
-- (void)removeVoiceBtnObserver{
-    [[NSNotificationCenter defaultCenter]removeObserver:self];
+- (void)removeVolumeButtonEvents{
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"AVSystemController_SystemVolumeDidChangeNotification" object:self];
 }
 
+#pragma mark dealloc
 - (void)dealloc{
-    [self removeVoiceBtnObserver];
+    [self removeNotification];
 }
 
 @end

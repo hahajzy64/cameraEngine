@@ -16,6 +16,7 @@
 
 @property (strong, nonatomic) IBOutlet UIView *viewContainer;
 @property (strong, nonatomic) IBOutlet UIView *focusCursor;
+@property (strong, nonatomic) IBOutlet UISlider *slider;
 
 @end
 
@@ -24,6 +25,11 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.engine = [[CameraEngine alloc]initRecordInView:self.viewContainer andFocusView:self.focusCursor];
+    
+    __weak typeof(self) weakSelf = self;
+    self.engine.focusChange = ^(float changeValue){
+        weakSelf.slider.value = changeValue;
+    };
 }
 
 -(BOOL)shouldAutorotate{
@@ -44,8 +50,9 @@
 }
 
 - (IBAction)focusChange:(id)sender {
-//    UISlider *slider = (UISlider *)sender;
+    UISlider *slider = (UISlider *)sender;
 //    AVCaptureDevice *currentDevice = [self.captureDeviceInput device];
+    [self.engine setVideoZoomFactor:slider.value*10+1];
 }
 
 - (void)didReceiveMemoryWarning {
