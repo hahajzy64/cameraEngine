@@ -37,7 +37,7 @@
     }];
 }
 - (IBAction)tagerCamera:(id)sender {
-    [self.engine changeTargetCamera];
+    [self.engine changeTargetCamera];;
 }
 - (IBAction)lightUp:(id)sender {    //闪光灯
     [self.engine flash];

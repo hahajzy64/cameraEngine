@@ -8,6 +8,7 @@
 #import "cameraEngine.h"
 #import <AVFoundation/AVFoundation.h>
 #import <AssetsLibrary/AssetsLibrary.h>
+#import <MediaPlayer/MediaPlayer.h>
 
 typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
 
@@ -24,6 +25,9 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
 
 @property (weak,nonatomic) UIView *viewContainer;//预览层
 @property (weak,nonatomic) UIView *focusCursor;//聚焦图片
+
+@property (assign,nonatomic) BOOL firstSetVoice;
+@property (assign,nonatomic) float saveVoice;
 
 @end
 
@@ -42,6 +46,7 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
         
         [self.captureSession startRunning];
         [self addGenstureRecognizerInView];
+        [self addVolumeButtonEvents];
     }
     return self;
 }
@@ -129,7 +134,6 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
     }
     return _captureVideoPreviewLayer;
 }
-
 
 #pragma mark 功能
 
@@ -393,6 +397,44 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
         NSLog(@"成功保存视频到相簿.");
     }];
     
+}
+
+#pragma mark 开启音量键录像
+- (void)addVolumeButtonEvents{
+    [[NSNotificationCenter defaultCenter] addObserver:self
+     
+                                             selector:@selector(volumeChanged:)
+     
+                                                 name:@"AVSystemController_SystemVolumeDidChangeNotification"
+     
+                                               object:nil];
+    
+    CGRect frame = CGRectMake(0, -100, 10, 0);
+    MPVolumeView *volumeView = [[MPVolumeView alloc] initWithFrame:frame];
+    [volumeView sizeToFit];
+    [[[[UIApplication sharedApplication] windows] firstObject] insertSubview:volumeView atIndex:0];
+    
+    self.firstSetVoice = YES;
+}
+
+-(void)volumeChanged:(NSNotification *)noti{
+    float voice = [[[noti userInfo]objectForKey:@"AVSystemController_AudioVolumeNotificationParameter"]floatValue];
+    if (self.firstSetVoice == YES) {
+        self.firstSetVoice = NO;
+    }else if (self.saveVoice < voice){
+        if (self.upBlock){
+            self.upBlock();
+        }
+    }
+    self.saveVoice = voice;
+}
+
+- (void)removeVoiceBtnObserver{
+    [[NSNotificationCenter defaultCenter]removeObserver:self];
+}
+
+- (void)dealloc{
+    [self removeVoiceBtnObserver];
 }
 
 @end
