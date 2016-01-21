@@ -53,6 +53,7 @@
  *  添加音量键控制功能，默认已添加
  */
 - (void)addVolumeButtonEvents;
+
 /**
  *  移除音量键控制功能
  */

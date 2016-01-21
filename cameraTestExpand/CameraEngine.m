@@ -277,17 +277,18 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
  */
 - (void)pinchDetected:(UIPinchGestureRecognizer *)recogniser{
     [self changeDeviceProperty:^(AVCaptureDevice *captureDevice) {
+        float maxZoomFactor = [self getMaxVideoZoomFactor];
         CGFloat initialPinchZoom = captureDevice.videoZoomFactor;
         CGFloat zoomFactor;
         float scale = recogniser.scale - 1.0;
-        zoomFactor = initialPinchZoom + scale;       
+        zoomFactor = initialPinchZoom + scale;
     
-        zoomFactor = MIN(11.0f, zoomFactor);
+        zoomFactor = MIN(maxZoomFactor, zoomFactor);
         zoomFactor = MAX(1.0f, zoomFactor);
         
         captureDevice.videoZoomFactor = zoomFactor;
         if (self.focusChange != nil) {
-            self.focusChange((zoomFactor - 1)/10);
+            self.focusChange((zoomFactor - 1) / (maxZoomFactor - 1));
         }
     }];
 }
@@ -298,17 +299,29 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
  *  @param scalePercent 缩放度
  */
 - (void)setVideoZoomFactor:(float)scalePercent{
-    scalePercent = scalePercent * 10 + 1;
-    if (![self.captureDeviceInputVideo device])
+    if (![self.captureDeviceInputVideo device]) {
         return;
+    }
     [self changeDeviceProperty:^(AVCaptureDevice *captureDevice) {
+        float maxZoomFactor = [self getMaxVideoZoomFactor];
+        float fixZoomFactor = (scalePercent * maxZoomFactor - 1) + 1;
         CGFloat zoomFactor;
-        zoomFactor = scalePercent ;
-        zoomFactor = MIN(11.0f, zoomFactor);
+        zoomFactor = fixZoomFactor ;
+        zoomFactor = MIN(maxZoomFactor, zoomFactor);
         zoomFactor = MAX(1.0f, zoomFactor);
         
         captureDevice.videoZoomFactor = zoomFactor;
     }];
+}
+
+- (float)getMaxVideoZoomFactor
+{
+    if (![self.captureDeviceInputVideo device]) {
+        return 1.0;
+    } else {
+        AVCaptureDeviceFormat *deviceFormat = [self.captureDeviceInputVideo device].activeFormat;
+        return deviceFormat.videoMaxZoomFactor;
+    }
 }
 
 /**
@@ -439,7 +452,7 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
     
 }
 
-#pragma mark 开启音量键录像
+#pragma mark 开启音量键录像、(黑科技慎用)
 - (void)addVolumeButtonEvents{
     [[NSNotificationCenter defaultCenter] addObserver:self
      
