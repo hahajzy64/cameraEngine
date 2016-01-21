@@ -24,6 +24,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    [self.navigationController setNavigationBarHidden:YES];
     self.engine = [[CameraEngine alloc]initRecordInView:self.viewContainer andFocusView:self.focusCursor];
     
     __weak typeof(self) weakSelf = self;
