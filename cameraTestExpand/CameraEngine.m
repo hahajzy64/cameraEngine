@@ -12,22 +12,23 @@
 
 typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
 
-@interface CameraEngine () <AVCaptureFileOutputRecordingDelegate>
+@interface CameraEngine () <AVCaptureFileOutputRecordingDelegate, AVCaptureVideoDataOutputSampleBufferDelegate>
 
-@property (strong,nonatomic) AVCaptureSession *captureSession;//负责输入和输出设置之间的数据传递
-@property (strong,nonatomic) AVCaptureDevice *captureDeviceVideo;//录像设备（镜头）
-@property (strong,nonatomic) AVCaptureDevice *captureDeviceAudio;//录音设备
-@property (strong,nonatomic) AVCaptureDeviceInput *captureDeviceInputVideo;//负责从captureDeviceVideo获得视频输入数据
-@property (strong,nonatomic) AVCaptureDeviceInput *captureDeviceInputAudio;//负责从captureDeviceAudio获得音频输入数据
-@property (strong,nonatomic) AVCaptureVideoPreviewLayer *captureVideoPreviewLayer;//相机拍摄预览图层
-@property (strong,nonatomic) AVCaptureMovieFileOutput *captureMovieFileOutput;//视频输出流
-@property (assign,nonatomic) UIBackgroundTaskIdentifier backgroundTaskIdentifier;//后台任务标识
+@property (strong, nonatomic) AVCaptureSession *captureSession;//负责输入和输出设置之间的数据传递
+@property (strong, nonatomic) AVCaptureDevice *captureDeviceVideo;//录像设备（镜头）
+@property (strong, nonatomic) AVCaptureDevice *captureDeviceAudio;//录音设备
+@property (strong, nonatomic) AVCaptureDeviceInput *captureDeviceInputVideo;//负责从captureDeviceVideo获得视频输入数据
+@property (strong, nonatomic) AVCaptureDeviceInput *captureDeviceInputAudio;//负责从captureDeviceAudio获得音频输入数据
+@property (strong, nonatomic) AVCaptureVideoPreviewLayer *captureVideoPreviewLayer;//相机拍摄预览图层
+@property (strong, nonatomic) AVCaptureMovieFileOutput *captureMovieFileOutput;//视频输出流
+//@property (strong, nonatomic) AVCaptureVideoDataOutput *captureVideoDataOutput;//处理每一帧图片
+@property (assign, nonatomic) UIBackgroundTaskIdentifier backgroundTaskIdentifier;//后台任务标识
 
-@property (weak,nonatomic) UIView *viewContainer;//预览层
-@property (weak,nonatomic) UIView *focusCursor;//聚焦图片
+@property (weak, nonatomic) UIView *viewContainer;//预览层
+@property (weak, nonatomic) UIView *focusCursor;//聚焦图片
 
-@property (assign,nonatomic) BOOL firstSetVoice;
-@property (assign,nonatomic) float saveVoice;
+@property (assign, nonatomic) BOOL firstSetVoice;
+@property (assign, nonatomic) float saveVoice;
 
 @end
 
@@ -55,11 +56,7 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
 - (AVCaptureSession *)captureSession{
     if (!_captureSession) {
         _captureSession = [[AVCaptureSession alloc]init];
-//        if ([_captureSession canSetSessionPreset:AVCaptureSessionPreset3840x2160]) {//设置分辨率
-//            _captureSession.sessionPreset = AVCaptureSessionPreset3840x2160;
-//        }else{
-            [_captureSession setSessionPreset:AVCaptureSessionPresetHigh];
-//        }
+        [_captureSession setSessionPreset:AVCaptureSessionPresetHigh];
         
         if ([_captureSession canAddInput:self.captureDeviceInputVideo]){
             [_captureSession addInput:self.captureDeviceInputVideo];
@@ -127,6 +124,14 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
     return _captureMovieFileOutput;
 }
 
+//- (AVCaptureVideoDataOutput *)captureVideoDataOutput
+//{
+//    if (!_captureVideoDataOutput) {
+//        _captureVideoDataOutput = [[AVCaptureVideoDataOutput alloc]init];
+//    }
+//    return _captureVideoDataOutput;
+//}
+
 - (AVCaptureVideoPreviewLayer *)captureVideoPreviewLayer{// 视频预览
     if (!_captureVideoPreviewLayer) {
         _captureVideoPreviewLayer = [[AVCaptureVideoPreviewLayer alloc]initWithSession:self.captureSession];
@@ -177,7 +182,7 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
     if ([captureDevice lockForConfiguration:&error]) {
         propertyChange(captureDevice);
         [captureDevice unlockForConfiguration];
-    }else{
+    } else {
         NSLog(@"设置设备属性过程发生错误，错误信息：%@",error.localizedDescription);
     }
 }
@@ -189,12 +194,12 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
 - (void)flash{
     if ([self getCurrentDevicePosition] == AVCaptureDevicePositionFront) {//是前置摄像头就不开
         
-    }else{
-        if(self.captureDeviceVideo.torchMode == AVCaptureTorchModeOff){//打开  (用hasTorch不行,不管开没开闪光灯都是返回ture)
+    } else {
+        if (self.captureDeviceVideo.torchMode == AVCaptureTorchModeOff) {//打开  (用hasTorch不行,不管开没开闪光灯都是返回ture)
             [self changeDeviceProperty:^(AVCaptureDevice *captureDevice) {
                 [captureDevice setTorchMode:AVCaptureTorchModeOn];
             }];
-        }else{                                                     //关闭
+        } else {                                                     //关闭
             [self changeDeviceProperty:^(AVCaptureDevice *captureDevice) {
                 [captureDevice setTorchMode:AVCaptureTorchModeOff];
             }];
@@ -414,8 +419,7 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
         NSURL *fileUrl=[NSURL fileURLWithPath:outputFielPath];
         NSLog(@"fileUrl:%@",fileUrl);
         [self.captureMovieFileOutput startRecordingToOutputFileURL:fileUrl recordingDelegate:self];
-    }
-    else{
+    } else {
         [self.captureMovieFileOutput stopRecording];//停止录制
     }
 }
@@ -452,6 +456,14 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
     
 }
 
+//协议方法,获取每一帧，将每一帧转换成图片，你也可以进行其他的渲染操作
+//- (void)captureOutput:(AVCaptureOutput *)captureOutput
+//didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
+//       fromConnection:(AVCaptureConnection *)connection {
+//    
+//    UIImage *image = imageFromSampleBuffer(sampleBuffer);
+//}
+
 #pragma mark 开启音量键录像、(黑科技慎用)
 - (void)addVolumeButtonEvents{
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -474,7 +486,7 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
     float voice = [[[noti userInfo]objectForKey:@"AVSystemController_AudioVolumeNotificationParameter"]floatValue];
     if (self.firstSetVoice == YES) {
         self.firstSetVoice = NO;
-    }else if (self.saveVoice < voice){
+    } else if (self.saveVoice < voice) {
         if (self.upBlock){
             self.upBlock();
         }
