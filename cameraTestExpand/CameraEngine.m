@@ -121,6 +121,7 @@ typedef void(^PropertyChangeBlock)(AVCaptureDevice *captureDevice);
     if (!_captureMovieFileOutput) {
         _captureMovieFileOutput = [[AVCaptureMovieFileOutput alloc]init];
     }
+    
     return _captureMovieFileOutput;
 }
 
